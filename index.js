@@ -137,6 +137,25 @@ async function run() {
       res.send({ success: true, result, purchaseCount });
     });
 
+    // API for get user models
+    app.get("/my-models", async (req, res) => {
+      const email = req.query.email;
+      const query = { createdBy: email };
+      const cursor = modelsCollection.find(query).sort({ createdAt: -1 });
+      const result = await cursor.toArray();
+      res.send({ success: true, result });
+    });
+
+    // API for get user purchased models
+    app.get("/my-purchases", async (req, res) => {
+      const email = req.query.email;
+      const query = { purchasedBy: email };
+      const cursor = purchasesCollection.find(query).sort({ purchasedAt: -1 });
+      const result = await cursor.toArray();
+      res.send({ success: true, result });
+    });
+
+    // Send a ping to confirm a successful connection
     // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"

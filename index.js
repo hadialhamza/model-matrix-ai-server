@@ -21,11 +21,6 @@ const client = new MongoClient(uri, {
   },
 });
 
-// default route for checking the server
-app.get("/", (req, res) => {
-  res.send("server is running");
-});
-
 // Connect MongoDB Server
 async function run() {
   try {
@@ -41,6 +36,11 @@ async function run() {
     // Create a collection of purchases models
     const purchasesCollection = usersDataBase.collection("purchases");
 
+    // default route for checking the server
+    app.get("/", (req, res) => {
+      res.send("server is running");
+    });
+
     // Post APIs
     // API for Add AI model data to database
     app.post("/models", async (req, res) => {
@@ -53,22 +53,23 @@ async function run() {
     // Get APIs
     // API for Find All data from database including search and framework
     app.get("/models", async (req, res) => {
-      const search = req.query.search;
-      const framework = req.query.framework;
+      //   const search = req.query.search;
+      //   const framework = req.query.framework;
 
-      const query = {};
-      if (search) {
-        query.name = { $regex: search, $options: "i" };
-      }
+      //   const query = {};
+      //   if (search) {
+      //     query.name = { $regex: search, $options: "i" };
+      //   }
 
-      if (framework) {
-        const frameworks = framework.split(",");
-        query.framework = { $in: frameworks };
-      }
+      //   if (framework) {
+      //     const frameworks = framework.split(",");
+      //     query.framework = { $in: frameworks };
+      //   }
 
-      const cursor = usersCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result);
+      //   const cursor = usersCollection.find(query);
+      //   const result = await cursor.toArray();
+      //   res.send(result);
+      res.send("server is working....");
     });
 
     // API for find 6 recent models

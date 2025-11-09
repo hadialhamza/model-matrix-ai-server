@@ -28,13 +28,13 @@ async function run() {
     // await client.connect();
 
     // Create a DataBase
-    const usersDataBase = client.db("modelMatrixDB");
+    const modelsDatabase = client.db("modelMatrixDB");
 
     // Create a Collection of AI models
-    const usersCollection = usersDataBase.collection("models");
+    const modelsCollection = modelsDatabase.collection("models");
 
     // Create a collection of purchases models
-    const purchasesCollection = usersDataBase.collection("purchases");
+    const purchasesCollection = modelsDatabase.collection("purchases");
 
     // default route for checking the server
     app.get("/", (req, res) => {
@@ -44,8 +44,8 @@ async function run() {
     // Post APIs
     // API for Add AI model data to database
     app.post("/models", async (req, res) => {
-      const newUser = req.body;
-      const result = await usersCollection.insertOne(newUser);
+      const newModel = req.body;
+      const result = await modelsCollection.insertOne(newModel);
       res.send(result);
       console.log(result);
     });
@@ -66,14 +66,14 @@ async function run() {
         query.framework = { $in: frameworks };
       }
 
-      const cursor = usersCollection.find(query);
+      const cursor = modelsCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
 
     // API for find 6 recent models
     app.get("/models/recent", async (req, res) => {
-      const cursor = usersCollection.find().sort({ createdAt: -1 }).limit(6);
+      const cursor = modelsCollection.find().sort({ createdAt: -1 }).limit(6);
       const result = await cursor.toArray();
       res.send(result);
     });

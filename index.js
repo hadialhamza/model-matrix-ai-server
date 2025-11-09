@@ -34,6 +34,7 @@ async function run() {
 
     // Create a DataBase
     const usersDataBase = client.db("modelMatrixDB");
+
     // Create a Collection of AI models
     const usersCollection = usersDataBase.collection("models");
 

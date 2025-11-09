@@ -38,7 +38,9 @@ async function run() {
 
     // default route for checking the server
     app.get("/", (req, res) => {
-      res.send("Welcome to Model Matrix Server. We are Online.");
+      res.send(
+        "Welcome to Model Matrix Server. We are Online and successfully connected to Database."
+      );
     });
 
     // Post APIs
@@ -105,6 +107,34 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await modelsCollection.deleteOne(query);
       res.send({ success: true, result });
+    });
+
+    // API for purchase model
+    app.post("/models/:id/purchase", async (req, res) => {
+      const id = req.params.id;
+      const buyerEmail = req.body;
+      const query = { _id: new ObjectId(id) };
+
+      const model = await modelsCollection.findOne(query);
+
+      const purchaseModel = {
+        modelId: model._id,
+        modelName: model.name,
+        framework: model.framework,
+        useCase: model.useCase,
+        createdBy: model.createdBy,
+        purchasedBy: buyerEmail,
+        image: model.image,
+        purchasedAt: new Date(),
+      };
+
+      const result = await purchasesCollection.insertOne(purchaseModel);
+
+      const purchaseCount = await modelsCollection.updateOne(query, {
+        $inc: { purchased: 1 },
+      });
+
+      res.send({ success: true, result, purchaseCount });
     });
 
     // await client.db("admin").command({ ping: 1 });

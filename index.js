@@ -2,12 +2,44 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const admin = require("firebase-admin");
 const app = express();
 const port = process.env.PORT || 5000;
+
+// Firebase Admin Service Account decoded
+const decoded = Buffer.from(process.env.FB_SERVICE_KEY, "base64").toString(
+  "utf8"
+);
+const serviceAccount = JSON.parse(decoded);
+
+// Firebase Admin Initialization
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Middleware function for check authentic user
+const verifyAuth = async (req, res, next) => {
+  const authorization = req.headers.authorization;
+
+  if (!authorization) {
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access" });
+  }
+
+  const token = authorization.split(" ")[1];
+  try {
+    await admin.auth().verifyIdToken(token);
+
+    next();
+  } catch (error) {
+    res.status(401).send({ error, message: "unauthorized access" });
+  }
+};
 
 // MongoDB URI
 const uri = process.env.DB_URI;
@@ -45,7 +77,7 @@ async function run() {
 
     // Post APIs
     // API for Add AI model data to database
-    app.post("/models", async (req, res) => {
+    app.post("/models", verifyAuth, async (req, res) => {
       const newModel = req.body;
       const result = await modelsCollection.insertOne(newModel);
       res.send({ success: true, result });
@@ -82,7 +114,7 @@ async function run() {
     });
 
     // API for find model by ID
-    app.get("/models/:id", async (req, res) => {
+    app.get("/models/:id", verifyAuth, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await modelsCollection.findOne(query);
@@ -90,7 +122,7 @@ async function run() {
     });
 
     // Update APIs
-    app.put("/models/:id", async (req, res) => {
+    app.put("/models/:id", verifyAuth, async (req, res) => {
       const id = req.params.id;
       const data = req.body;
       const query = { _id: new ObjectId(id) };
@@ -102,7 +134,7 @@ async function run() {
     });
 
     // Delete API
-    app.delete("/models/:id", async (req, res) => {
+    app.delete("/models/:id", verifyAuth, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await modelsCollection.deleteOne(query);
@@ -110,7 +142,7 @@ async function run() {
     });
 
     // API for purchase model
-    app.post("/models/:id/purchase", async (req, res) => {
+    app.post("/models/:id/purchase", verifyAuth, async (req, res) => {
       const id = req.params.id;
       const buyerEmail = req.body;
       const query = { _id: new ObjectId(id) };
@@ -138,7 +170,7 @@ async function run() {
     });
 
     // API for get user models
-    app.get("/my-models", async (req, res) => {
+    app.get("/my-models", verifyAuth, async (req, res) => {
       const email = req.query.email;
       const query = { createdBy: email };
       const cursor = modelsCollection.find(query).sort({ createdAt: -1 });
@@ -147,7 +179,7 @@ async function run() {
     });
 
     // API for get user purchased models
-    app.get("/my-purchases", async (req, res) => {
+    app.get("/my-purchases", verifyAuth, async (req, res) => {
       const email = req.query.email;
       const query = { purchasedBy: email };
       const cursor = purchasesCollection.find(query).sort({ purchasedAt: -1 });

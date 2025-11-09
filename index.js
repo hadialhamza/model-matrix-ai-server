@@ -25,7 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server
-    await client.connect();
+    // await client.connect();
 
     // Create a DataBase
     const usersDataBase = client.db("modelMatrixDB");
@@ -38,7 +38,7 @@ async function run() {
 
     // default route for checking the server
     app.get("/", (req, res) => {
-      res.send("server is running");
+      res.send("Welcome to Model Matrix Server. We are Online.");
     });
 
     // Post APIs
@@ -53,23 +53,22 @@ async function run() {
     // Get APIs
     // API for Find All data from database including search and framework
     app.get("/models", async (req, res) => {
-      //   const search = req.query.search;
-      //   const framework = req.query.framework;
+      const search = req.query.search;
+      const framework = req.query.framework;
 
-      //   const query = {};
-      //   if (search) {
-      //     query.name = { $regex: search, $options: "i" };
-      //   }
+      const query = {};
+      if (search) {
+        query.name = { $regex: search, $options: "i" };
+      }
 
-      //   if (framework) {
-      //     const frameworks = framework.split(",");
-      //     query.framework = { $in: frameworks };
-      //   }
+      if (framework) {
+        const frameworks = framework.split(",");
+        query.framework = { $in: frameworks };
+      }
 
-      //   const cursor = usersCollection.find(query);
-      //   const result = await cursor.toArray();
-      //   res.send(result);
-      res.send("server is working....");
+      const cursor = usersCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
     });
 
     // API for find 6 recent models

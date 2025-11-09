@@ -46,7 +46,8 @@ async function run() {
     app.post("/models", async (req, res) => {
       const newModel = req.body;
       const result = await modelsCollection.insertOne(newModel);
-      res.send(result);
+      res.send({ success: true, result });
+
       console.log(result);
     });
 
@@ -68,14 +69,14 @@ async function run() {
 
       const cursor = modelsCollection.find(query);
       const result = await cursor.toArray();
-      res.send(result);
+      res.send({ success: true, result });
     });
 
     // API for find 6 recent models
     app.get("/models/recent", async (req, res) => {
       const cursor = modelsCollection.find().sort({ createdAt: -1 }).limit(6);
       const result = await cursor.toArray();
-      res.send(result);
+      res.send({ success: true, result });
     });
 
     // API for find model by ID
@@ -83,7 +84,19 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await modelsCollection.findOne(query);
-      res.send(result);
+      res.send({ success: true, result });
+    });
+
+    // Update APIs
+    app.put("/models/:id", async (req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const query = { _id: new ObjectId(id) };
+      const updatedData = {
+        $set: data,
+      };
+      const result = await modelsCollection.updateOne(query, updatedData);
+      res.send({ success: true, result });
     });
 
     // await client.db("admin").command({ ping: 1 });

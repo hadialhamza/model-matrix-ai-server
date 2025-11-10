@@ -32,12 +32,18 @@ const verifyAuth = async (req, res, next) => {
   }
 
   const token = authorization.split(" ")[1];
-  try {
-    await admin.auth().verifyIdToken(token);
+  if (!token) {
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access" });
+  }
 
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    req.user = decoded;
     next();
   } catch (error) {
-    res.status(401).send({ error, message: "unauthorized access" });
+    res.status(401).send({ error: true, message: "unauthorized access" });
   }
 };
 
@@ -78,7 +84,12 @@ async function run() {
     // Post APIs
     // API for Add AI model data to database
     app.post("/models", verifyAuth, async (req, res) => {
-      const newModel = req.body;
+      const newModel = {
+        ...req.body,
+        createdBy: req.user.email,
+        createdAt: new Date(),
+        purchased: 0,
+      };
       const result = await modelsCollection.insertOne(newModel);
       res.send({ success: true, result });
 
@@ -144,7 +155,7 @@ async function run() {
     // API for purchase model
     app.post("/models/:id/purchase", verifyAuth, async (req, res) => {
       const id = req.params.id;
-      const buyerEmail = req.body;
+      const buyerEmail = req.user.email;
       const query = { _id: new ObjectId(id) };
 
       const model = await modelsCollection.findOne(query);
@@ -171,7 +182,7 @@ async function run() {
 
     // API for get user models
     app.get("/my-models", verifyAuth, async (req, res) => {
-      const email = req.query.email;
+      const email = req.user.email;
       const query = { createdBy: email };
       const cursor = modelsCollection.find(query).sort({ createdAt: -1 });
       const result = await cursor.toArray();
@@ -180,7 +191,7 @@ async function run() {
 
     // API for get user purchased models
     app.get("/my-purchases", verifyAuth, async (req, res) => {
-      const email = req.query.email;
+      const email = req.user.email;
       const query = { purchasedBy: email };
       const cursor = purchasesCollection.find(query).sort({ purchasedAt: -1 });
       const result = await cursor.toArray();

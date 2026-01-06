@@ -66,7 +66,7 @@ async function run() {
     // await client.connect();
 
     // Create a DataBase
-    const modelsDatabase = client.db("modelMatrixDB");
+    const modelsDatabase = client.db("aximoAiDB");
 
     // Create a Collection of AI models
     const modelsCollection = modelsDatabase.collection("models");
@@ -74,11 +74,92 @@ async function run() {
     // Create a collection of purchases models
     const purchasesCollection = modelsDatabase.collection("purchases");
 
+    // Create a Collection of users
+    const usersCollection = modelsDatabase.collection("users");
+
     // default route for checking the server
     app.get("/", (req, res) => {
       res.send(
         "Welcome to Model Matrix Server. We are Online and successfully connected to Database."
       );
+    });
+
+    // User Related APIs
+    // Save user data (SignUp / Login)
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      const query = { email: user.email };
+      const updateDoc = {
+        $set: {
+          ...user,
+          lastLogin: new Date(),
+        },
+        $setOnInsert: {
+          role: "user",
+          createdAt: new Date(),
+        },
+      };
+      const result = await usersCollection.updateOne(query, updateDoc, {
+        upsert: true,
+      });
+      res.send(result);
+    });
+
+    // Get user data
+    app.get("/users/:email", verifyAuth, async (req, res) => {
+      const email = req.params.email;
+      if (req.user.email !== email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
+    // Update user data
+    app.put("/users/:email", verifyAuth, async (req, res) => {
+      const email = req.params.email;
+      if (req.user.email !== email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const filter = { email: email };
+      const updatedDoc = {
+        $set: req.body,
+      };
+      const result = await usersCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    // Admin: Get all users
+    app.get("/users", verifyAuth, async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
+    // Admin: Delete user
+    app.delete("/users/:id", verifyAuth, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // Admin: Get System Stats
+    app.get("/admin/stats", verifyAuth, async (req, res) => {
+      const totalUsers = await usersCollection.estimatedDocumentCount();
+      const totalModels = await modelsCollection.estimatedDocumentCount();
+      // Calculate revenue or total purchases
+      const totalPurchases = await purchasesCollection.estimatedDocumentCount();
+
+      // Mock revenue calculation (e.g. $50 avg per model)
+      const totalRevenue = totalPurchases * 50;
+
+      res.send({
+        totalUsers,
+        totalModels,
+        totalRevenue,
+        totalPurchases,
+      });
     });
 
     // Post APIs

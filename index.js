@@ -162,6 +162,12 @@ async function run() {
       });
     });
 
+    // Admin: Get All Models (Raw List)
+    app.get("/admin/models", verifyAuth, async (req, res) => {
+      const result = await modelsCollection.find().toArray();
+      res.send({ success: true, result });
+    });
+
     // Post APIs
     // API for Add AI model data to database
     app.post("/models", verifyAuth, async (req, res) => {

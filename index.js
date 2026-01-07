@@ -80,7 +80,7 @@ async function run() {
     // default route for checking the server
     app.get("/", (req, res) => {
       res.send(
-        "Welcome to Model Matrix Server. We are Online and successfully connected to Database."
+        "Welcome to Aximo AI Server. We are Online and successfully connected to Database."
       );
     });
 
@@ -160,12 +160,6 @@ async function run() {
         totalRevenue,
         totalPurchases,
       });
-    });
-
-    // Admin: Get All Models (Raw List)
-    app.get("/admin/models", verifyAuth, async (req, res) => {
-      const result = await modelsCollection.find().toArray();
-      res.send({ success: true, result });
     });
 
     // Post APIs
